@@ -2,7 +2,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Star Wars Search • SWAPI.tech + Popmotion</title>
+  <title>Star Wars Search</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/popmotion/dist/popmotion.global.min.js"></script>
   <style>
@@ -32,7 +32,7 @@ canvas#stars{
   left:0;
   width:0;
   height:100%;
-  background:linear-gradient(90deg, var(--accent), rgba(245,158,11,0.3));
+  background: linear-gradient(90deg, #00bfff, rgba(0,191,255,0.3)); /* green lightsaber effect */
   z-index:0; /* behind content */
   transition: width 0.3s ease;
   border-radius:8px;
@@ -177,6 +177,7 @@ canvas#stars{
     searchBtn.addEventListener('click',()=>{ if(searchInput.value.trim()) smartSearch(searchInput.value); });
     clearBtn.addEventListener('click',()=>{ resultsBox.innerHTML='Start a search to see results.'; searchInput.value=''; });
     searchInput.addEventListener('keydown',e=>{ if(e.key==='Enter') searchBtn.click(); });
+    
     // Hyperspace starfield animation
     const canvas=document.getElementById('stars'); const ctx=canvas.getContext('2d');
     let stars=[]; const STAR_COUNT=200;
