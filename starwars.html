@@ -8,36 +8,41 @@
   <style>
     :root{ --bg:#071021; --card:#0f1724; --muted:#97a6b2; --accent:#f59e0b }
     body{ background: linear-gradient(180deg,var(--bg), #051021); color:#e6eef6; font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; padding:28px; overflow-x:hidden; position:relative }
-    .app{ max-width:1100px; margin:0 auto; display:grid; grid-template-columns: 1fr 420px; gap:24px; position:relative; z-index:1 }
-    .panel{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:18px; box-shadow:0 12px 40px rgba(2,6,23,.6); border:1px solid rgba(255,255,255,0.03) }
+    .app{ max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:24px; position:relative; z-index:1 }
+    .panel{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:18px; box-shadow:0 12px 40px rgba(2,6,23,.6); border:1px solid rgba(255,255,255,0.03); opacity:0.95; position:relative; overflow:hidden; } 
     .search-row{ display:flex; gap:8px }
     #results{ min-height:300px }
     .result-card{ background:linear-gradient(180deg,#071026,#061423); border-radius:10px; padding:12px; display:flex; gap:12px; align-items:center; margin-bottom:10px; cursor:pointer; border:1px solid rgba(255,255,255,0.02); position:relative; overflow:hidden; transition:0.2s }
-    .result-card:hover{ transform:translateY(-4px); transition:transform .18s ease }
-    .result-card::before{ content:''; position:absolute; top:50%; left:50%; width:0; height:0; background:rgba(245,158,11,0.2); transform:translate(-50%,-50%) rotate(45deg); border-radius:50%; transition:width 0.3s ease, height 0.3s ease; }
-    .result-card:hover::before{ width:300px; height:300px; }
     .thumb{ width:86px; height:86px; border-radius:8px; background:linear-gradient(180deg,#052033,#031827); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px; overflow:hidden }
     .details{ flex:1 }
     .meta{ color:var(--muted); font-size:13px }
     .loader{ width:40px; height:40px; border-radius:50%; border:4px solid rgba(255,255,255,0.06); border-top-color:var(--accent); animation:spin 1s linear infinite; margin:auto }
     @keyframes spin{ to{ transform:rotate(360deg) } }
-    .side{ display:flex; flex-direction:column; gap:12px }
-    #card{ height:260px; border-radius:12px; display:flex; align-items:center; justify-content:center; user-select:none; cursor:grab; background:linear-gradient(180deg,#07183b,#05203b); color:#f59e0b; font-weight:bold; text-align:center; font-size:18px; position:relative; overflow:hidden }
-    .small{ font-size:13px; color:var(--muted) }
-    .detail-panel{ margin-top:8px; background:rgba(255,255,255,0.02); padding:10px; border-radius:8px }
-    .img-cover{ width:100%; height:200px; object-fit:cover; border-radius:8px; background:#061428 }
-    @media(max-width:980px){ .app{ grid-template-columns:1fr; } .side{ order:-1 } }
 
-/* Hyperspace starfield */
+
 canvas#stars{
-  position:fixed;
+  position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; pointer-events:none;
+}
+
+/* Lightsaber hover effect - behind content */
+.lightsaber-hover::before{
+  content:'';
+  position:absolute;
   top:0;
   left:0;
-  width:100%;
+  width:0;
   height:100%;
-  z-index:-1;  /* send behind everything */
-  pointer-events:none; /* prevent blocking clicks */
+  background:linear-gradient(90deg, var(--accent), rgba(245,158,11,0.3));
+  z-index:0; /* behind content */
+  transition: width 0.3s ease;
+  border-radius:8px;
+  pointer-events:none;
 }
+.lightsaber-hover:hover::before{
+  width:100%;
+}
+.lightsaber-hover *{ position:relative; z-index:1; } /* ensures text/images above hover */
+
 
   </style>
 </head>
@@ -48,7 +53,7 @@ canvas#stars{
       <h2>Star Wars Search</h2>
       <p class="small">Type a name (e.g., "Luke Skywalker", "Tatooine", "Falcon"). The app will auto-search across common resources (people, planets, starships, vehicles, species, films) and return matches. You may also prefix the query with a resource, e.g. <code>people: luke</code>.</p>
 
-```
+
   <div style="margin-top:12px" class="search-row">
     <input id="searchInput" class="form-control" placeholder="Search by name — try: Luke Skywalker" />
     <button id="searchBtn" class="btn btn-primary">Search</button>
@@ -58,15 +63,6 @@ canvas#stars{
   <div id="results" style="margin-top:14px">Start a search to see results.</div>
 </div>
 
-<div class="panel side">
-  <h4>Popmotion Playground</h4>
-  <div id="card">Drag / Throw Me</div>
-  <div class="detail-panel">
-    <div class="small">Click a result to see details. Images are attempted from <code>starwars-visualguide.com</code> and may 404 for some entries — the UI falls back to a textual thumb.</div>
-  </div>
-</div>
-```
-
   </div>
 
   <script>
@@ -75,7 +71,7 @@ canvas#stars{
     const searchBtn = document.getElementById('searchBtn');
     const clearBtn = document.getElementById('clearBtn');
     const searchInput = document.getElementById('searchInput');
-    const { styler, spring, pointer, listen, value, tween } = window.popmotion || {};
+    const { styler, spring } = window.popmotion || {};
 
     function setLoading(is){
       resultsBox.innerHTML = is ? '<div style="display:flex;align-items:center;justify-content:center;height:160px"><div class="loader"></div></div>' : '';
@@ -85,7 +81,7 @@ canvas#stars{
       const uid = item.uid || (item.url && item.url.split('/').filter(Boolean).pop());
       const name = item.name || (item.properties && (item.properties.name || item.properties.title)) || uid;
       const div = document.createElement('div');
-      div.className = 'result-card';
+      div.className = 'result-card lightsaber-hover';
       div.dataset.resource = resource;
       div.dataset.uid = uid;
 
@@ -115,13 +111,18 @@ canvas#stars{
       det.innerHTML = `<div style="font-weight:600">${name}</div><div class="meta">${resource} • uid: ${uid || '—'}</div>`;
       div.appendChild(thumb); div.appendChild(det);
 
-      div.addEventListener('click', ()=> showDetails(resource, uid, div) );
+      if(styler && spring){
+        const s = styler(div);
+        s.set({y:20, opacity:0});
+        spring({from:{y:20, opacity:0}, to:{y:0, opacity:1}, stiffness:120, damping:12}).start(v=>s.set(v));
+      }
+
+      div.addEventListener('click', ()=> showDetails(resource, uid));
+
       return div;
     }
 
-    async function showDetails(resource, uid, anchor){
-      try { if(styler && tween){ const s=styler(anchor); tween({from:{scale:1},to:{scale:1.05},duration:120}).start(v=>s.set('scale',v.scale)); setTimeout(()=>tween({from:{scale:1.05},to:{scale:1},duration:140}).start(v=>s.set('scale',v.scale)),120); } } catch(e){}
-
+    async function showDetails(resource, uid){
       resultsBox.innerHTML = '<div style="text-align:center;padding:30px"><div class="loader"></div><div class="small" style="margin-top:8px">Loading details...</div></div>';
       if(!uid){ resultsBox.innerHTML = '<div class="small">No UID available for this item.</div>'; return; }
       try{
@@ -146,7 +147,7 @@ canvas#stars{
         container.innerHTML = `<div style="display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start">
             <div>${imgSrc?`<img src="${imgSrc}" onerror="this.style.display='none'" style="width:100%;border-radius:8px"/>`:''}</div>
             <div><h4 style="margin:0">${p.name||p.title||'—'}</h4>
-            <div class="small" style="margin-top:6px">Resource: ${resource} • uid: ${uid}</div>
+              <div class="small" style="margin-top:6px">Resource: ${resource} • uid: ${uid}</div>
             <div style="margin-top:10px">${Object.entries(p).filter(([k,_])=>!['created','edited','url','homeworld'].includes(k) && !relatedFields.includes(k)).map(([k,v])=>`<div><strong>${k.replace(/_/g,' ')}:</strong> ${v}</div>`).join('')}${homeworldHtml}${relatedHtml.join('')}</div></div></div>`;
         resultsBox.innerHTML=''; resultsBox.appendChild(container);
       } catch(err){ console.error(err); resultsBox.innerHTML='<div class="small">Error loading details.</div>'; }
@@ -163,7 +164,11 @@ canvas#stars{
         try{
           const url=`https://www.swapi.tech/api/${r}/?name=${encodeURIComponent(name)}`;
           const res = await fetch(url); const json = await res.json();
-          if(json?.result?.length){ resultsBox.innerHTML=''; json.result.forEach(item=>resultsBox.appendChild(makeCard({uid:item.uid,name:item.name,properties:item.properties},r))); return; }
+          if(json?.result?.length){
+            resultsBox.innerHTML='';
+            json.result.forEach(item=>resultsBox.appendChild(makeCard({uid:item.uid,name:item.name,properties:item.properties},r)));
+            return;
+          }
         } catch(e){ console.warn('search error', e); }
       }
       resultsBox.innerHTML='<div class="small">No matches found across resources.</div>';
@@ -172,21 +177,6 @@ canvas#stars{
     searchBtn.addEventListener('click',()=>{ if(searchInput.value.trim()) smartSearch(searchInput.value); });
     clearBtn.addEventListener('click',()=>{ resultsBox.innerHTML='Start a search to see results.'; searchInput.value=''; });
     searchInput.addEventListener('keydown',e=>{ if(e.key==='Enter') searchBtn.click(); });
-
-    // Popmotion draggable card with bounce
-    const demoCard=document.getElementById('card');
-    if(pointer && spring && listen && value && styler){
-      const cardStyler=styler(demoCard);
-      const cardPos=value({x:0,y:0},v=>cardStyler.set(v));
-      listen(demoCard,'pointerdown').start(e=>{
-        e.preventDefault();
-        const start={x:e.clientX,y:e.clientY}; const origin=cardPos.get();
-        const move=pointer({x:start.x,y:start.y});
-        const moveSub=move.start(({x,y})=>{ cardPos.update({x:origin.x+(x-start.x),y:origin.y+(y-start.y)}); });
-        const up=listen(window,'pointerup').start(()=>{ moveSub.stop(); up.stop(); spring({from:cardPos.get(),to:{x:0,y:0},stiffness:180,damping:14}).start(v=>cardPos.update(v)); });
-      });
-    }
-
     // Hyperspace starfield animation
     const canvas=document.getElementById('stars'); const ctx=canvas.getContext('2d');
     let stars=[]; const STAR_COUNT=200;
