@@ -17,7 +17,6 @@
       <div class="cat-list" id="categoryList">
         <!-- category items injected here -->
       </div>
-      <!-- optional small note -->
       <div style="margin-top:auto;text-align:center;color:var(--muted);font-size:12px;padding:6px">Click a category to browse all items</div>
     </aside>
 
@@ -271,7 +270,7 @@
       }
     }
 
-    // Populate the left minimal glass sidebar
+    // Populate the left sidebar
     function renderSidebar(){
       categoryList.innerHTML = '';
       resources.forEach(r => {
@@ -281,7 +280,7 @@
 
         const thumb = document.createElement('div');
         thumb.className = 'cat-thumb';
-        // try to show a hero image if present in assets; fall back to resource text
+        // try to show an image if present in assets; fall back to resource text
         const img = new Image();
         img.src = `assets/img/hero/${r}.jpg`;
         img.onload = () => { thumb.style.backgroundImage = `url('${img.src}')`; thumb.style.backgroundSize = 'cover'; thumb.textContent = ''; };
