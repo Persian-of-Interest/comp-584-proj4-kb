@@ -321,18 +321,51 @@
     renderSidebar();
 
     // Hyperspace starfield animation
-    const canvas=document.getElementById('stars'); const ctx=canvas.getContext('2d');
-    let stars=[]; const STAR_COUNT=200;
-    function resizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
-    window.addEventListener('resize',resizeCanvas); resizeCanvas();
-    for(let i=0;i<STAR_COUNT;i++){ stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,z:Math.random()*2+0.5}); }
-    function animateStars(){
-      ctx.fillStyle='#071021'; ctx.fillRect(0,0,canvas.width,canvas.height);
-      for(let s of stars){
-        s.z+=0.05; if(s.z>2.5){ s.z=0.5; s.x=Math.random()*canvas.width; s.y=Math.random()*canvas.height; }
-        const px=(s.x-canvas.width/2)/(2.5-s.z)+canvas.width/2;
-        const py=(s.y-canvas.height/2)/(2.5-s.z)+canvas.height/2;
-        const radius=2*(2.5-s.z); ctx.beginPath(); ctx.arc(px,py,radius,0,2*Math.PI); ctx.fillStyle='white'; ctx.fill();
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    const STAR_COUNT = 200;
+    let stars = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < STAR_COUNT; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        z: Math.random() * 2 + 0.5,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2
+      });
+    }
+
+    function animateStars() {
+      ctx.fillStyle = '#071021';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      for (let s of stars) {
+        s.z -= 0.05; // move star toward viewer
+        if (s.z <= 0) {
+          s.z = Math.random() * 2 + 0.5;
+          s.x = (Math.random() - 0.5) * canvas.width;
+          s.y = (Math.random() - 0.5) * canvas.height;
+        }
+
+        const px = cx + s.x / s.z;
+        const py = cy + s.y / s.z;
+        const radius = (2 / s.z);
+
+        ctx.beginPath();
+        ctx.arc(px, py, radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
       }
       requestAnimationFrame(animateStars);
     }
