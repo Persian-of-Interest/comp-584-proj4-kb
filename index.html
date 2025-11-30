@@ -199,7 +199,7 @@
         async function fetchNames(urls){ if(!urls||urls.length===0) return []; return await Promise.all(urls.map(async u=>{ try{ const r=await fetch(u); const j=await r.json(); return j.result?.properties?.name||j.result?.properties?.title||'—'; } catch(e){ return '—'; } })); }
 
         const container = document.createElement('div');
-        const relatedFields = ['starships','vehicles','planets','characters','people','species','films'];
+        const relatedFields = ['starships','vehicles','planets','characters','people','species','pilots','films'];
         const relatedHtml = await Promise.all(relatedFields.map(async field=>{ if(p[field]?.length){ const names = await fetchNames(p[field]); return `<div><strong>${field.replace(/_/g,' ')}:</strong> ${names.join(', ')}</div>`; } else return ''; }));
 
         let homeworldHtml = '';
