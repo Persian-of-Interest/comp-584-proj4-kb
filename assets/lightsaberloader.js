@@ -1,3 +1,4 @@
+// To use, replace loader in index.html and remove the finally blocks on showDetails and fetchCategory as well as the upper level try and finally block in smartSearch
 // // Lightsaber loader
 // function setLoading(is) {
 //     // Clear previous loader
