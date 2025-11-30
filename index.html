@@ -49,79 +49,57 @@
     const { styler, spring } = window.popmotion || {};
 
     function setLoading(is) {
-      // Clear previous loader
-      const prev = resultsBox.querySelector('.loader-container');
-      if (prev && prev.dataset.flickerInterval) clearInterval(prev.dataset.flickerInterval);
-      if (prev && prev.dataset.animFrame) cancelAnimationFrame(prev.dataset.animFrame);
-      resultsBox.innerHTML = '';
-      if (!is) return;
+      // Remove any existing overlay first
+      const existingOverlay = document.querySelector('.global-loader-overlay');
+      if (existingOverlay) {
+        existingOverlay.remove();
+      }
+
+      if (!is) return; // exit early if turning off loader
+
+      // Create full-screen overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'global-loader-overlay';
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.background = 'rgba(0,0,0,0.35)';
+      overlay.style.backdropFilter = 'blur(2px)';
+      overlay.style.display = 'flex';
+      overlay.style.flexDirection = 'column';
+      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'center';
+      overlay.style.zIndex = '9999';
+      document.body.appendChild(overlay);
 
       // Loader container
       const loaderContainer = document.createElement('div');
-      loaderContainer.className = 'loader-container';
-      loaderContainer.style.position = 'relative';
       loaderContainer.style.display = 'flex';
       loaderContainer.style.flexDirection = 'column';
       loaderContainer.style.alignItems = 'center';
       loaderContainer.style.justifyContent = 'center';
-      loaderContainer.style.height = '180px';
-      resultsBox.appendChild(loaderContainer);
+      overlay.appendChild(loaderContainer);
 
-      // Lightsaber group (blade + hilt)
-      const lightsaber = document.createElement('div');
-      lightsaber.style.position = 'absolute';
-      lightsaber.style.bottom = '20px'; // leave space for text
-      lightsaber.style.transformOrigin = 'bottom center';
-      loaderContainer.appendChild(lightsaber);
-
-      // Blade
-      const blade = document.createElement('div');
-      blade.style.width = '12px';
-      blade.style.height = '140px';
-      blade.style.borderRadius = '6px';
-      blade.style.background = 'linear-gradient(to top, #39ff14 0%, #39ff14 100%)';
-      blade.style.boxShadow = '0 0 20px #39ff14';
-      lightsaber.appendChild(blade);
-
-      // Hilt
-      const hilt = document.createElement('div');
-      hilt.style.width = '16px';
-      hilt.style.height = '30px';
-      hilt.style.background = 'linear-gradient(to bottom, #888 0%, #555 100%)';
-      hilt.style.borderRadius = '4px';
-      hilt.style.position = 'absolute';
-      hilt.style.bottom = '0';
-      hilt.style.left = '50%';
-      hilt.style.transform = 'translateX(-50%)';
-      lightsaber.appendChild(hilt);
+      // GIF
+      const gif = document.createElement('img');
+      gif.src = 'assets/loading.gif';
+      gif.alt = 'Loading...';
+      gif.style.width = '260px';
+      gif.style.height = '260px';
+      gif.style.objectFit = 'contain';
+      loaderContainer.appendChild(gif);
 
       // Loading text
       const loadingText = document.createElement('div');
       loadingText.textContent = 'Loading…';
-      loadingText.style.marginTop = '180px'; // below lightsaber
+      loadingText.style.marginTop = '10px';
       loadingText.style.fontFamily = 'Arial, sans-serif';
-      loadingText.style.fontSize = '14px';
-      loadingText.style.color = '#39ff14';
+      loadingText.style.fontSize = '16px';
+      loadingText.style.color = '#FF964B';
+      loadingText.style.fontWeight = 'bold';
       loaderContainer.appendChild(loadingText);
-
-      // Glow flicker
-      const flickerInterval = setInterval(() => {
-        const glow = 20 + Math.random() * 15;
-        blade.style.boxShadow = `0 0 ${glow}px #39ff14`;
-      }, 80);
-      loaderContainer.dataset.flickerInterval = flickerInterval;
-
-      // Swing animation
-      let angle = 0;
-      let direction = 1;
-      const speed = 1.2;
-      function animate() {
-        angle += direction * speed;
-        if (angle > 30 || angle < -30) direction *= -1;
-        lightsaber.style.transform = `rotate(${angle}deg)`;
-        loaderContainer.dataset.animFrame = requestAnimationFrame(animate);
-      }
-      animate();
     }
 
     function makeCard(item, resource){
@@ -179,28 +157,39 @@
       query=query.trim(); if(!query) return;
       const prefixMatch=query.match(/^([a-zA-Z]+)\s*:\s*(.+)$/);
       let resourceList=resources; let name=query;
-      if(prefixMatch && resources.includes(prefixMatch[1].toLowerCase())){ resourceList=[prefixMatch[1].toLowerCase()]; name=prefixMatch[2]; }
+      if(prefixMatch && resources.includes(prefixMatch[1].toLowerCase())){ 
+        resourceList=[prefixMatch[1].toLowerCase()]; 
+        name=prefixMatch[2]; 
+      }
 
       setLoading(true);
-      for(const r of resourceList){
-        try{
-          const url = `https://www.swapi.tech/api/${r}/?name=${encodeURIComponent(name)}`;
-          const res = await fetch(url);
-          const json = await res.json();
-          if(json?.result?.length){
-            resultsBox.innerHTML='';
-            json.result.forEach(item=>resultsBox.appendChild(makeCard({uid:item.uid,name:item.name,properties:item.properties},r)));
-            return;
-          }
-        } catch(e){ console.warn('search error', e); }
+      try{
+        for(const r of resourceList){
+          try{
+            const url = `https://www.swapi.tech/api/${r}/?name=${encodeURIComponent(name)}`;
+            const res = await fetch(url);
+            const json = await res.json();
+            if(json?.result?.length){
+              resultsBox.innerHTML='';
+              json.result.forEach(item=>resultsBox.appendChild(makeCard({uid:item.uid,name:item.name,properties:item.properties},r)));
+              return;
+            }
+          } catch(e){ console.warn('search error', e); }
+        }
+        resultsBox.innerHTML='<div class="small">No matches found across resources.</div>';
+      } finally {
+        // Hide loader after async work is done
+        setLoading(false);
       }
-      resultsBox.innerHTML='<div class="small">No matches found across resources.</div>';
     }
 
     // === Details view (swapi.tech) ===
     async function showDetails(resource, uid){
       setLoading(true); 
-      if(!uid){ resultsBox.innerHTML = '<div class="small">No UID available for this item.</div>'; return; }
+      if(!uid){ 
+        resultsBox.innerHTML = '<div class="small">No UID available for this item.</div>'; 
+        return; 
+      }
       try{
         const res = await fetch(`https://www.swapi.tech/api/${resource}/${uid}`);
         const json = await res.json();
@@ -231,7 +220,13 @@
               <div class="small" style="margin-top:6px">Resource: ${resource} • uid: ${uid}</div>
             <div style="margin-top:10px">${Object.entries(p).filter(([k,_])=>!['created','edited','url','homeworld'].includes(k) && !relatedFields.includes(k)).map(([k,v])=>`<div><strong>${k.replace(/_/g,' ')}:</strong> ${v}</div>`).join('')}${homeworldHtml}${relatedHtml.join('')}</div></div></div>`;
         resultsBox.innerHTML=''; resultsBox.appendChild(container);
-      } catch(err){ console.error(err); resultsBox.innerHTML='<div class="small">Error loading details.</div>'; }
+      } catch(err) { 
+        console.error(err); 
+        resultsBox.innerHTML='<div class="small">Error loading details.</div>'; 
+      } finally {
+        // Hide loader after async work is done
+        setLoading(false);
+      }
     }
 
     // ====================== CATEGORIES USING OLD SWAPI.DEV (fetch all pages) ======================
@@ -246,7 +241,7 @@
           if(json.results && json.results.length) accumulated.push(...json.results);
           url = json.next; // swapi.dev uses full next URL or null
         }
-      } catch(e){
+      } catch(e) {
         console.error('fetchAllFromSwapiDev error for', resource, e);
         throw e;
       }
@@ -267,9 +262,12 @@
         } else {
           resultsBox.innerHTML = '<div class="small">No items found in this category.</div>';
         }
-      } catch(e){
+      } catch(e) {
         resultsBox.innerHTML = '<div class="small">Error fetching category.</div>';
         console.error(e);
+      } finally {
+        // Hide loader after async work is done
+        setLoading(false);
       }
     }
 
