@@ -199,7 +199,14 @@
 
         const container = document.createElement('div');
         const relatedFields = ['starships','vehicles','planets','characters','people','species','pilots','films'];
-        const relatedHtml = await Promise.all(relatedFields.map(async field=>{ if(p[field]?.length){ const names = await fetchNames(p[field]); return `<div><strong>${field.replace(/_/g,' ')}:</strong> ${names.join(', ')}</div>`; } else return ''; }));
+        const relatedHtml = await Promise.all(
+          relatedFields.map(async field=>{
+              if(p[field]?.length){
+                const names = await fetchNames(p[field]); 
+                return `<div><strong>${field.replace(/_/g,' ')}:</strong> ${names.join(', ')}</div>`; 
+              } else return '';
+            })
+          );
 
         let homeworldHtml = '';
         if(p.homeworld){ const name = await fetchNames([p.homeworld]); homeworldHtml = `<div><strong>homeworld:</strong> ${name[0]}</div>`; }
@@ -217,7 +224,11 @@
             <div>${imgSrc?`<img src="${imgSrc}" onerror="this.style.display='none'" style="width:100%;border-radius:8px"/>`:''}</div>
             <div><h4 style="margin:0">${p.name||p.title||'—'}</h4>
               <div class="small" style="margin-top:6px">Resource: ${resource} • uid: ${uid}</div>
-            <div style="margin-top:10px">${Object.entries(p).filter(([k,_])=>!['created','edited','url','homeworld'].includes(k) && !relatedFields.includes(k)).map(([k,v])=>`<div><strong>${k.replace(/_/g,' ')}:</strong> ${v}</div>`).join('')}${homeworldHtml}${relatedHtml.join('')}</div></div></div>`;
+            <div style="margin-top:10px">
+              ${Object.entries(p)
+                .filter(([k,_])=>!['created','edited','url','homeworld'].includes(k) && !relatedFields.includes(k))
+                .map(([k,v])=>`<div><strong>${k.replace(/_/g,' ')}:</strong> ${v}</div>`)
+                .join('')}${homeworldHtml}${relatedHtml.join('')}</div></div></div>`;
         resultsBox.innerHTML=''; resultsBox.appendChild(container);
       } catch(err) { 
         console.error(err); 
