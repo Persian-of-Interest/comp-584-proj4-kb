@@ -92,7 +92,7 @@ canvas#stars{
   border-color: rgba(0,191,255,0.12);
 }
 .cat-thumb {
-  width:56px; height:56px; border-radius:8px; overflow:hidden; flex:0 0 56px;
+  width:100px; height:56px; border-radius:8px; overflow:hidden; /*flex:0 0 56px;*/
   background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px;
 }
@@ -111,7 +111,7 @@ canvas#stars{
   <canvas id="stars"></canvas>
 
   <div class="app">
-    <!-- Sidebar (Style 2 — minimal glass panel) -->
+    <!-- Sidebar -->
     <aside class="sidebar" aria-label="Categories">
       <h4>Categories</h4>
       <div class="cat-list" id="categoryList">
@@ -172,11 +172,16 @@ canvas#stars{
                      resource === 'planets' ? 'planets' :
                      resource === 'starships' ? 'starships' :
                      resource === 'vehicles' ? 'vehicles' :
-                     resource === 'species' ? 'species' : '';
+                     resource === 'species' ? 'species' :
+                     resource === 'films' ? 'films' : '';
 
       if(folder && uid){
         if(resource === 'people'){ img.src = `assets/img/people/${uid}.jpg`; }
-        else{ img.src = `https://starwars-visualguide.com/assets/img/${folder}/${uid}.jpg`; }
+        if(resource === 'planets'){ img.src = `assets/img/planets/${uid}.jpg`; }
+        if(resource === 'starships'){ img.src = `assets/img/starships/${uid}.jpg`; }
+        if(resource === 'vehicles'){ img.src = `assets/img/vehicles/${uid}.jpg`; }
+        if(resource === 'species'){ img.src = `assets/img/species/${uid}.jpg`; }
+        if(resource === 'films'){ img.src = `assets/img/films/${uid}.jpg`; }
         img.onerror = () => { thumb.textContent = resource; thumb.style.fontSize = '12px'; thumb.style.color = 'var(--muted)'; };
         thumb.appendChild(img);
       } else { thumb.textContent = resource; }
@@ -241,7 +246,12 @@ canvas#stars{
 
         let imgSrc = '';
         if(resource==='people'){ imgSrc=`./assets/img/people/${uid}.jpg`; }
-        else{ const folder = resource==='people' ? 'characters' : resource==='planets' ? 'planets' : resource==='starships' ? 'starships' : resource==='vehicles' ? 'vehicles' : resource==='species' ? 'species' : ''; imgSrc=folder?`https://starwars-visualguide.com/assets/img/${folder}/${uid}.jpg`:''; }
+        else if(resource==='planets'){ imgSrc=`./assets/img/planets/${uid}.jpg`; }
+        else if(resource==='starships'){ imgSrc=`./assets/img/starships/${uid}.jpg`; }
+        else if(resource==='vehicles'){ imgSrc=`./assets/img/vehicles/${uid}.jpg`; }
+        else if(resource==='species'){ imgSrc=`./assets/img/species/${uid}.jpg`; }
+        else if(resource==='films'){ imgSrc=`./assets/img/films/${uid}.jpg`; }
+        else{ const folder = resource==='people' ? 'characters' : resource==='planets' ? 'planets' : resource==='starships' ? 'starships' : resource==='vehicles' ? 'vehicles' : resource==='species' ? 'species' : ''; imgSrc=folder?`./assets/img/${folder}/${uid}.jpg`:''; }
 
         container.innerHTML = `<div style="display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start">
             <div>${imgSrc?`<img src="${imgSrc}" onerror="this.style.display='none'" style="width:100%;border-radius:8px"/>`:''}</div>
